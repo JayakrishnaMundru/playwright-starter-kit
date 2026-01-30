@@ -1,6 +1,6 @@
 import { test } from '../src/fixtures/test';
 
-test('user can log in and see secure area', async ({ login, dashboardPage }) => {
+test('user can log in and see inventory (Products)', async ({ login, inventoryPage }) => {
   await login();
-  await dashboardPage.assertLoaded();
+  await inventoryPage.assertLoaded();
 });

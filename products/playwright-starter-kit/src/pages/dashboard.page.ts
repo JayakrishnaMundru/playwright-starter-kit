@@ -1,13 +1,6 @@
-import { expect } from '@playwright/test';
-import { BasePage } from './base.page';
+import { InventoryPage } from './inventory.page';
 
 /**
- * Demo POM for https://the-internet.herokuapp.com/secure
+ * Backwards-compatible alias: in SauceDemo, the post-login landing page is the Inventory page.
  */
-export class DashboardPage extends BasePage {
-  private heading = this.page.getByRole('heading', { name: /secure area/i });
-
-  async assertLoaded() {
-    await expect(this.heading).toBeVisible();
-  }
-}
+export class DashboardPage extends InventoryPage {}
