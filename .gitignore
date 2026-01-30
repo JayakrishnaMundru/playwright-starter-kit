@@ -1,0 +1,32 @@
+# Ignore local agent identity & notes
+memory/
+USER.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+AGENTS.md
+BOOTSTRAP.md
+HEARTBEAT.md
+
+# Ignore WFN-specific artifacts
+WFN_*
+
+# Ignore generated reports/artifacts
+playwright-report/
+test-results/
+*.zip
+
+# Node
+node_modules/
+
+# Env/Secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# OS/Editor
+.DS_Store
+.vscode/
+.idea/
