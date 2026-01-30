@@ -11,8 +11,8 @@ export default defineConfig({
   use: {
     baseURL: env.baseUrl,
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    screenshot: 'on',
+    video: 'on'
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
