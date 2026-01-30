@@ -1,0 +1,10 @@
+node_modules/
+output/
+.next/
+dist/
+.env
+apps/web/.next/
+apps/web/node_modules/
+apps/web/.turbo/
+packages/*/dist/
+packages/*/node_modules/
