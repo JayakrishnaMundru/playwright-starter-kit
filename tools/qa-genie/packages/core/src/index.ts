@@ -1,1 +1,7 @@
 export * from './spec/schema';
+export * from './project/newProject';
+export * from './project/paths';
+export * from './project/slug';
+export * from './project/spec';
+export * from './run/explore';
+export * from './run/generate';
