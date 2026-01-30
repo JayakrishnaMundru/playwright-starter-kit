@@ -8,8 +8,13 @@ function req(name: string): string {
   return v;
 }
 
+function opt(name: string): string | undefined {
+  const v = process.env[name];
+  return v && v.trim() ? v : undefined;
+}
+
 export const env = {
   baseUrl: req('BASE_URL'),
-  userEmail: req('E2E_USER_EMAIL'),
-  userPassword: req('E2E_USER_PASSWORD'),
+  userEmail: opt('E2E_USER_EMAIL'),
+  userPassword: opt('E2E_USER_PASSWORD'),
 };
