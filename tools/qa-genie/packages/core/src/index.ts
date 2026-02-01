@@ -5,3 +5,4 @@ export * from './project/slug';
 export * from './project/spec';
 export * from './run/explore';
 export * from './run/generate';
+export * from './run/record';

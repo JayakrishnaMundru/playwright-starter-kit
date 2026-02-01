@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import path from 'node:path';
-import { exploreProject, generateProject, newProject, resolveProjectDir, slugifyUrl } from '@qa-genie/core';
+import { exploreProject, generateProject, newProject, recordAndGeneratePOM, resolveProjectDir, slugifyUrl } from '@qa-genie/core';
 
 const program = new Command();
 program.name('qa-genie').description('Explore a URL, interview for requirements, and generate tests.').version('0.0.1');
@@ -54,6 +54,18 @@ program
     const t = target === 'manual' || target === 'playwright' ? target : 'both';
     const out = await generateProject({ projectDir, target: t });
     console.log(JSON.stringify({ ok: true, manualCsv: out.manualCsv, playwrightDir: out.playwrightDir }, null, 2));
+  });
+
+program
+  .command('record')
+  .requiredOption('--url <url>', 'Base URL to open in a headed browser (include https://)')
+  .option('--out <dir>', 'Output directory for generated framework', 'output/pom')
+  .option('--max-pages <n>', 'Max unique pages to generate', '25')
+  .action(async (opts) => {
+    const baseUrl = String(opts.url);
+    const outDir = path.resolve(process.cwd(), String(opts.out));
+    const summary = await recordAndGeneratePOM({ outDir, baseUrl, headed: true, maxPages: Number(opts.maxPages) });
+    console.log(JSON.stringify({ ok: true, pages: summary.pages.length, summaryPath: path.join(outDir, 'playwright', 'qa-genie.summary.json') }, null, 2));
   });
 
 await program.parseAsync(process.argv);
