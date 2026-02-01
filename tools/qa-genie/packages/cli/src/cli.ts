@@ -68,4 +68,7 @@ program
     console.log(JSON.stringify({ ok: true, pages: summary.pages.length, summaryPath: path.join(outDir, 'playwright', 'qa-genie.summary.json') }, null, 2));
   });
 
-await program.parseAsync(process.argv);
+program.parseAsync(process.argv).catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

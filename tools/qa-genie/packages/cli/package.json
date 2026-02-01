@@ -2,7 +2,6 @@
   "name": "qa-genie",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "bin": {
     "qa-genie": "dist/cli.js"
   },
