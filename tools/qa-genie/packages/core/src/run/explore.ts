@@ -91,6 +91,9 @@ async function bestEffortLogin(page: Page, user: string, pass: string, notes: st
 export async function exploreProject(params: {
   projectDir: string;
   maxPages?: number;
+  maxDepth?: number;
+  ignorePatterns?: string[];
+  storageStatePath?: string;
   userEnv?: string;
   passEnv?: string;
 }) {
@@ -107,10 +110,22 @@ export async function exploreProject(params: {
   const notes: string[] = [];
 
   const baseUrl = new URL(spec.baseUrl);
-  const maxPages = params.maxPages ?? 15;
+  const maxPages = params.maxPages ?? 25;
+  const maxDepth = params.maxDepth ?? 2;
+  const ignorePatterns = (params.ignorePatterns ?? [
+    'logout',
+    'signout',
+    'log-out',
+    '/logout',
+    '/signout',
+  ]).map((x) => x.toLowerCase());
 
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+
+  const context = params.storageStatePath
+    ? await browser.newContext({ ignoreHTTPSErrors: true, storageState: params.storageStatePath })
+    : await browser.newContext({ ignoreHTTPSErrors: true });
+
   const page = await context.newPage();
 
   const inv: Inventory = {
@@ -123,7 +138,9 @@ export async function exploreProject(params: {
   try {
     await page.goto(spec.baseUrl, { waitUntil: 'domcontentloaded' });
 
-    if (spec.auth.mode === 'credentials') {
+    if (params.storageStatePath) {
+      notes.push(`Using storageState for auth: ${params.storageStatePath}`);
+    } else if (spec.auth.mode === 'credentials') {
       if (!user || !pass) {
         notes.push(`Auth mode is credentials, but env vars ${userVar}/${passVar} are not set. Exploring as anonymous.`);
       } else {
@@ -132,12 +149,35 @@ export async function exploreProject(params: {
       }
     }
 
-    const queue: string[] = [page.url()];
+    type QItem = { url: string; depth: number };
+
+    const queue: QItem[] = [{ url: page.url(), depth: 0 }];
     const seen = new Set<string>();
 
+    const normalize = (raw: string) => {
+      const u = new URL(raw);
+      // drop hash
+      u.hash = '';
+      // strip noisy tracking params
+      const noisy = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid']);
+      for (const k of Array.from(u.searchParams.keys())) {
+        if (noisy.has(k.toLowerCase())) u.searchParams.delete(k);
+      }
+      // normalize trailing slash
+      if (u.pathname !== '/' && u.pathname.endsWith('/')) u.pathname = u.pathname.slice(0, -1);
+      return u.toString();
+    };
+
+    const shouldIgnore = (u: string) => {
+      const low = u.toLowerCase();
+      return ignorePatterns.some((p) => low.includes(p));
+    };
+
     while (queue.length && inv.pages.length < maxPages) {
-      const url = queue.shift()!;
+      const item = queue.shift()!;
+      const url = normalize(item.url);
       if (seen.has(url)) continue;
+      if (shouldIgnore(url)) continue;
       seen.add(url);
 
       try {
@@ -165,8 +205,11 @@ export async function exploreProject(params: {
         forms,
       });
 
-      for (const l of links) {
-        if (!seen.has(l) && queue.length < maxPages * 4) queue.push(l);
+      if (item.depth < maxDepth) {
+        for (const l of links) {
+          const n = normalize(l);
+          if (!seen.has(n) && !shouldIgnore(n) && queue.length < maxPages * 6) queue.push({ url: n, depth: item.depth + 1 });
+        }
       }
     }
 

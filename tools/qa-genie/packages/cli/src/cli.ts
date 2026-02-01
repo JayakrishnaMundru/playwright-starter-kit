@@ -24,7 +24,10 @@ program
 program
   .command('explore')
   .requiredOption('--project <path>', 'Project folder (e.g., output/my-app)')
-  .option('--max-pages <n>', 'Max pages to crawl', '15')
+  .option('--max-pages <n>', 'Max pages to crawl', '25')
+  .option('--depth <n>', 'Max link depth', '2')
+  .option('--ignore <pattern...>', 'Ignore URL patterns (repeatable)', [])
+  .option('--storage-state <path>', 'Playwright storageState JSON for authenticated crawling')
   .option('--user-env <name>', 'Env var for username', 'QA_GENIE_USER')
   .option('--pass-env <name>', 'Env var for password', 'QA_GENIE_PASS')
   .action(async (opts) => {
@@ -32,6 +35,9 @@ program
     const inv = await exploreProject({
       projectDir,
       maxPages: Number(opts.maxPages),
+      maxDepth: Number(opts.depth),
+      ignorePatterns: (opts.ignore as string[]) || [],
+      storageStatePath: opts.storageState ? path.resolve(process.cwd(), opts.storageState) : undefined,
       userEnv: opts.userEnv,
       passEnv: opts.passEnv,
     });
