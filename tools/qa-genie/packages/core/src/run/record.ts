@@ -46,6 +46,8 @@ export async function recordAndGeneratePOM(opts: RecordOptions) {
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
 
   const visited = new Map<string, { name: string; snapshot: PageSnapshot; filePath: string }>();
+  const navEdges: Array<{ from: string; to: string; ts: string }> = [];
+  const lastUrlByPage = new WeakMap<Page, string>();
 
   const attachPage = (page: Page) => {
     page.on('framenavigated', async (frame) => {
@@ -62,8 +64,12 @@ export async function recordAndGeneratePOM(opts: RecordOptions) {
         // ignore
       }
 
+      const prev = lastUrlByPage.get(page);
       const snap = await captureSnapshot(page);
       const key = normalizeUrl(snap.url);
+      // record navigation edge regardless of new/duplicate page
+      if (prev && prev !== key) navEdges.push({ from: prev, to: key, ts: new Date().toISOString() });
+      lastUrlByPage.set(page, key);
       if (visited.has(key)) return;
 
       const pageName = await aiNamePage({ url: snap.url, title: snap.title, headers: snap.headers });
@@ -106,6 +112,7 @@ export async function recordAndGeneratePOM(opts: RecordOptions) {
   };
 
   await fs.writeFile(path.join(frameworkDir, 'qa-genie.summary.json'), JSON.stringify(summary, null, 2), 'utf-8');
+  await fs.writeFile(path.join(frameworkDir, 'qa-genie.nav.json'), JSON.stringify(navEdges, null, 2), 'utf-8');
 
   // Minimal Playwright config + package.json
   const pkg = {

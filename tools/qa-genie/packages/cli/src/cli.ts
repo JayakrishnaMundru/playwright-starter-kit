@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import path from 'node:path';
-import { exploreProject, generateProject, newProject, recordAndGeneratePOM, resolveProjectDir, slugifyUrl } from '@qa-genie/core';
+import { exploreProject, generatePlan, generateProject, newProject, recordAndGeneratePOM, resolveProjectDir, slugifyUrl } from '@qa-genie/core';
 
 const program = new Command();
 program.name('qa-genie').description('Explore a URL, interview for requirements, and generate tests.').version('0.0.1');
@@ -65,7 +65,32 @@ program
     const baseUrl = String(opts.url);
     const outDir = path.resolve(process.cwd(), String(opts.out));
     const summary = await recordAndGeneratePOM({ outDir, baseUrl, headed: true, maxPages: Number(opts.maxPages) });
-    console.log(JSON.stringify({ ok: true, pages: summary.pages.length, summaryPath: path.join(outDir, 'playwright', 'qa-genie.summary.json') }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          pages: summary.pages.length,
+          summaryPath: path.join(outDir, 'playwright', 'qa-genie.summary.json'),
+          navPath: path.join(outDir, 'playwright', 'qa-genie.nav.json'),
+        },
+        null,
+        2,
+      ),
+    );
+  });
+
+program
+  .command('plan')
+  .requiredOption('--summary <path>', 'Path to qa-genie.summary.json')
+  .option('--nav <path>', 'Path to qa-genie.nav.json (optional)')
+  .option('--out <path>', 'Output plan path (yaml)')
+  .action(async (opts) => {
+    const summaryPath = path.resolve(process.cwd(), String(opts.summary));
+    const navPath = opts.nav ? path.resolve(process.cwd(), String(opts.nav)) : undefined;
+    const outPath = opts.out ? path.resolve(process.cwd(), String(opts.out)) : undefined;
+
+    const out = await generatePlan({ summaryPath, navPath, outPath });
+    console.log(JSON.stringify({ ok: true, flows: out.plan.flows.length, planPath: out.outPath }, null, 2));
   });
 
 program.parseAsync(process.argv).catch((err) => {
