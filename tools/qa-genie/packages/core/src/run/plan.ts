@@ -177,7 +177,18 @@ export async function generatePlan(params: { summaryPath: string; navPath?: stri
     // ok
   }
 
-  const flowsBase = computeFlows(summary, edges);
+  let flowsBase = computeFlows(summary, edges);
+
+  // Fallback: older recordings may not have nav edges.
+  if (!flowsBase.length && summary.pages.length) {
+    flowsBase = [
+      {
+        steps: summary.pages.map((p) => ({ url: p.url, page: p.name })),
+        pages: summary.pages.map((p) => p.name),
+        urls: summary.pages.map((p) => p.url),
+      },
+    ];
+  }
 
   const flows: PlanFlow[] = [];
   for (const f of flowsBase) {
