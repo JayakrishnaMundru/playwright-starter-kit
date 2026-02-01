@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import path from 'node:path';
-import { exploreProject, generatePlan, generateProject, newProject, recordAndGeneratePOM, resolveProjectDir, slugifyUrl } from '@qa-genie/core';
+import { exploreProject, formatDir, generateAmazonQPrompts, generatePlan, generateProject, newProject, recordAndGeneratePOM, resolveProjectDir, slugifyUrl } from '@qa-genie/core';
 
 const program = new Command();
 program.name('qa-genie').description('Explore a URL, interview for requirements, and generate tests.').version('0.0.1');
@@ -91,6 +91,29 @@ program
 
     const out = await generatePlan({ summaryPath, navPath, outPath });
     console.log(JSON.stringify({ ok: true, flows: out.plan.flows.length, planPath: out.outPath }, null, 2));
+  });
+
+program
+  .command('prompt')
+  .requiredOption('--plan <path>', 'Path to qa-genie.plan.yaml')
+  .requiredOption('--pages <dir>', 'Path to generated pages/ directory')
+  .option('--out <dir>', 'Output directory for prompt pack', 'amazonq')
+  .action(async (opts) => {
+    const planPath = path.resolve(process.cwd(), String(opts.plan));
+    const pagesDir = path.resolve(process.cwd(), String(opts.pages));
+    const outDir = path.resolve(process.cwd(), String(opts.out));
+
+    const out = await generateAmazonQPrompts({ planPath, pagesDir, outDir });
+    console.log(JSON.stringify({ ok: true, outDir: out.outDir, files: out.files }, null, 2));
+  });
+
+program
+  .command('format')
+  .requiredOption('--dir <dir>', 'Directory to format with Prettier (e.g., output/pom/playwright)')
+  .action(async (opts) => {
+    const dir = path.resolve(process.cwd(), String(opts.dir));
+    const out = await formatDir({ dir });
+    console.log(JSON.stringify({ ok: true, changedCount: out.changedCount }, null, 2));
   });
 
 program.parseAsync(process.argv).catch((err) => {

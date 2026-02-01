@@ -7,3 +7,5 @@ export * from './run/explore';
 export * from './run/generate';
 export * from './run/record';
 export * from './run/plan';
+export * from './run/prompt';
+export * from './run/format';
